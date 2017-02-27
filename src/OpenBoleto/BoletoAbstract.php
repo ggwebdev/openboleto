@@ -1235,6 +1235,58 @@ abstract class BoletoAbstract
     }
 
     /**
+     * Retorna o HTML do boleto gerado
+     *
+     * @return string
+     */
+    public function getOnlyVars()
+    {
+        $vars = array(
+            'linha_digitavel' => $this->getLinhaDigitavel(),
+            'cedente' => $this->getCedente()->getNome(),
+            'cedente_cpf_cnpj' => $this->getCedente()->getDocumento(),
+            'cedente_endereco1' => $this->getCedente()->getEndereco(),
+            'cedente_endereco2' => $this->getCedente()->getCepCidadeUf(),
+            'logo_banco' => $this->getLogoBancoBase64(),
+            'logotipo' => $this->getLogoPath(),
+            'codigo_banco_com_dv' => $this->getCodigoBancoComDv(),
+            'especie' => static::$especie[$this->getMoeda()],
+            'quantidade' => $this->getQuantidade(),
+            'data_vencimento' => $this->getContraApresentacao() ? 'Contra Apresenta&ccedil;&atilde;o' : $this->getDataVencimento()->format('d/m/Y'),
+            'data_processamento'  => $this->getDataProcessamento()->format('d/m/Y'),
+            'data_documento' => $this->getDataDocumento()->format('d/m/Y'),
+            'pagamento_minimo' => static::formataDinheiro($this->getPagamentoMinimo()),
+            'valor_documento' => static::formataDinheiro($this->getValor()),
+            'desconto_abatimento' => static::formataDinheiro($this->getDescontosAbatimentos()),
+            'outras_deducoes' => static::formataDinheiro($this->getOutrasDeducoes()),
+            'mora_multa' => static::formataDinheiro($this->getMoraMulta()),
+            'outros_acrescimos' => static::formataDinheiro($this->getOutrosAcrescimos()),
+            'valor_cobrado' => static::formataDinheiro($this->getValorCobrado()),
+            'valor_unitario' => static::formataDinheiro($this->getValorUnitario()),
+            'sacador_avalista' => $this->getSacadorAvalista() ? $this->getSacadorAvalista()->getNomeDocumento() : null,
+            'sacado' => $this->getSacado()->getNome(),
+            'sacado_documento' => $this->getSacado()->getDocumento(),
+            'sacado_endereco1' => $this->getSacado()->getEndereco(),
+            'sacado_endereco2' => $this->getSacado()->getCepCidadeUf(),
+            'demonstrativo' => (array) $this->getDescricaoDemonstrativo() + array(null, null, null, null, null), // Max: 5 linhas
+            'instrucoes' => (array) $this->getInstrucoes() + array(null, null, null, null, null, null, null, null), // Max: 8 linhas
+            'local_pagamento' => $this->getLocalPagamento(),
+            'numero_documento' => $this->getNumeroDocumento(),
+            'agencia_codigo_cedente'=> $this->getAgenciaCodigoCedente(),
+            'nosso_numero' => $this->getNossoNumeroG(),
+            'especie_doc' => $this->getEspecieDoc(),
+            'aceite' => $this->getAceite(),
+            'carteira' => $this->getCarteiraNome(),
+            'uso_banco' => $this->getUsoBanco(),
+            'codigo_barras' => $this->getImagemCodigoDeBarrasG(),
+            'resource_path' => $this->getResourcePath(),
+        );
+
+        return $vars;
+
+    }
+
+    /**
      * Retorna o campo Agência/Cedente do boleto
      *
      * @return string
@@ -1403,6 +1455,70 @@ abstract class BoletoAbstract
         return $retorno . '<div class="black large"></div>' .
         '<div class="white thin"></div>' .
         '<div class="black thin"></div>' .
+        '</div>';
+    }
+
+
+
+    /**
+     * Retorna a string contendo as imagens do código de barras, segundo o padrão Febraban
+     *
+     * @return string
+     */
+    public function getImagemCodigoDeBarrasG()
+    {
+        $codigo = $this->getNumeroFebraban();
+
+        $barcodes = array('00110', '10001', '01001', '11000', '00101', '10100', '01100', '00011', '10010', '01010');
+
+        for ($f1 = 9; $f1 >= 0; $f1--) {
+            for ($f2 = 9; $f2 >= 0; $f2--) {
+
+                $f = ($f1 * 10) + $f2;
+                $texto = '';
+
+                for ($i = 1; $i < 6; $i++) {
+                    $texto .= substr($barcodes[$f1], ($i - 1), 1) . substr($barcodes[$f2], ($i - 1), 1);
+                }
+
+                $barcodes[$f] = $texto;
+                
+            }
+        }
+
+        // Guarda inicial
+        $retorno = '<div class="barcode" style="height:50px;overflow:hidden">' .
+        '<img src="'.public_path('assets/img/slip/p.png').'" width="1" height="50">' .
+        '<img src="'.public_path('assets/img/slip/b.png').'" width="1" height="50">' .
+        '<img src="'.public_path('assets/img/slip/p.png').'" width="1" height="50">' .
+        '<img src="'.public_path('assets/img/slip/b.png').'" width="1" height="50">';
+
+        if (strlen($codigo) % 2 != 0) {
+            $codigo = "0" . $codigo;
+        }
+
+        // Draw dos dados
+        while (strlen($codigo) > 0) {
+
+            $i = (int) round(self::caracteresEsquerda($codigo, 2));
+            $codigo = self::caracteresDireita($codigo, strlen($codigo) - 2);
+            $f = $barcodes[$i];
+
+            for ($i = 1; $i < 11; $i += 2) {
+
+                $f1 = (substr($f, ($i - 1), 1) == "0") ? '1' : '3';
+                $retorno .= '<img src="'.public_path('assets/img/slip/p.png').'" width="'.$f1.'" height="50">';
+
+                $f2 = (substr($f, $i, 1) == '0') ? '1' : '3';
+                $retorno .= '<img src="'.public_path('assets/img/slip/b.png').'" width="'.$f2.'" height="50">';
+
+            }
+        }
+
+        // Final
+        return $retorno . '<img src="'.public_path('assets/img/slip/p.png').'" width="3" height="50">' .
+        '<img src="'.public_path('assets/img/slip/b.png').'" width="1" height="50">' .
+        '<img src="'.public_path('assets/img/slip/p.png').'" width="1" height="50">' .
         '</div>';
     }
 

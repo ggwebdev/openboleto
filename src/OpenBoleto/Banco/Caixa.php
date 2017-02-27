@@ -108,11 +108,7 @@ class Caixa extends BoletoAbstract
         // se futuramente o projeto permitir a geração de lotes para inclusão, o tipo registrado pode ser útil
         // 1 => registrada, 2 => sem registro. O número 4 indica que é o beneficiário que está gerando o boleto
         $carteira = $this->getCarteira();
-        if ($carteira == 'SR'){
-            $numero = '24';
-        } else {
-            $numero = '14';
-        }
+        $numero = ($carteira == 'SR') ? '24' : '14';
 
         // As 15 próximas posições no nosso número são a critério do beneficiário, utilizando o sequencial
         // Depois, calcula-se o código verificador por módulo 11
@@ -146,31 +142,27 @@ class Caixa extends BoletoAbstract
      */
     public function getCampoLivre()
     {
-        $nossoNumero = $this->gerarNossoNumero();
-        $beneficiario = $this->getConta();
+        $nossoNumero    = $this->gerarNossoNumero();
+        $beneficiario   = $this->getConta();
 
         // Código do beneficiário + DV]
-        $modulo = self::modulo11($beneficiario);
-        $campoLivre = $beneficiario . $modulo['digito'];
+        $modulo         = self::modulo11($beneficiario);
+        $campoLivre     = $beneficiario . $modulo['digito'];
 
         // Sequencia 1 (posições 3-5 NN) + Constante 1 (1 => registrada, 2 => sem registro)
-        $carteira = $this->getCarteira();
-        if ($carteira == 'SR'){
-            $constante = '2';
-        } else {
-            $constante = '1';
-        }
-        $campoLivre .= substr($nossoNumero, 2, 3) . $constante;
+        $carteira       = $this->getCarteira();
+        $constante      = ($carteira == 'SR') ? '2' : '1';
+        $campoLivre     .= substr($nossoNumero, 2, 3) . $constante;
 
         // Sequencia 2 (posições 6-8 NN) + Constante 2 (4-Beneficiário) 
-        $campoLivre .= substr($nossoNumero, 5, 3) . '4';
+        $campoLivre     .= substr($nossoNumero, 5, 3) . '4';
 
         // Sequencia 3 (posições 9-17 NN)
-        $campoLivre .= substr($nossoNumero, 8, 9);
+        $campoLivre     .= substr($nossoNumero, 8, 9);
 
         // DV do Campo Livre 
-        $modulo = self::modulo11($campoLivre);
-        $campoLivre .= $modulo['digito'];
+        $modulo         = self::modulo11($campoLivre);
+        $campoLivre     .= $modulo['digito'];
 
        return $campoLivre;
     }
