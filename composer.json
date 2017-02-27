@@ -1,14 +1,16 @@
 {
-    "name": "kriansa/openboleto",
+    "name": "ggwebdev/openboleto",
     "type": "library",
     "description": "Biblioteca para geração de boletos bancários.",
     "keywords": ["boleto", "boleto bancario"],
-    "homepage": "http://github.com/kriansa/openboleto",
+    "homepage": "http://github.com/ggwebdev/openboleto",
     "license": "MIT",
     "authors": [
         {
             "name": "Daniel Garajau",
-            "email": "kriansa@facebook.com"
+            "email": "kriansa@facebook.com",
+
+            "name": "Gabriel Glauber"
         }
     ],
     "require": {
