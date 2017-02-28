@@ -5,22 +5,14 @@
     "keywords": ["boleto", "boleto bancario"],
     "homepage": "http://github.com/ggwebdev/openboleto",
     "license": "MIT",
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "http://github.com/ggwebdev/openboleto"
-        }
-    ],
     "authors": [
         {
             "name": "Daniel Garajau",
             "email": "kriansa@facebook.com",
-            "name": "Gabriel Glauber"
         }
     ],
     "require": {
-        "php": ">=5.3.0",
-        "kriansa/openboleto": "dev-bugfix"
+        "php": ">=5.3.0"
     },
     "autoload": {
         "psr-0": {"OpenBoleto\\": "src/"}
